@@ -9,7 +9,7 @@ public class MiniCatBootstrapMain {
         bootstrap.start();
 
         System.out.println("main START sleep");
-        TimeUnit.SECONDS.sleep(10);
+        TimeUnit.SECONDS.sleep(30);
         System.out.println("main END sleep");
 
         bootstrap.stop();

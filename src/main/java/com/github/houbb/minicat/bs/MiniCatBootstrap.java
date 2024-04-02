@@ -2,11 +2,13 @@ package com.github.houbb.minicat.bs;
 
 import com.github.houbb.log.integration.core.Log;
 import com.github.houbb.log.integration.core.LogFactory;
+import com.github.houbb.minicat.dto.MiniCatRequest;
+import com.github.houbb.minicat.dto.MiniCatResponse;
 import com.github.houbb.minicat.exception.MiniCatException;
 import com.github.houbb.minicat.util.InnerHttpUtil;
 
 import java.io.IOException;
-import java.io.OutputStream;
+import java.io.InputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
 
@@ -72,8 +74,14 @@ public class MiniCatBootstrap {
 
             while(runningFlag && !serverSocket.isClosed()){
                 Socket socket = serverSocket.accept();
-                OutputStream outputStream = socket.getOutputStream();
-                outputStream.write(InnerHttpUtil.httpResp("Hello miniCat!").getBytes());
+                // 输入流
+                InputStream inputStream = socket.getInputStream();
+                MiniCatRequest request = new MiniCatRequest(inputStream);
+
+                // 输出流
+                MiniCatResponse response = new MiniCatResponse(socket.getOutputStream());
+                response.write(InnerHttpUtil.httpResp("Hello miniCat!").getBytes());
+
                 socket.close();
             }
 
