@@ -1,11 +1,13 @@
 package com.github.houbb.minicat.bs;
 
+import com.github.houbb.heaven.util.io.FileUtil;
 import com.github.houbb.log.integration.core.Log;
 import com.github.houbb.log.integration.core.LogFactory;
 import com.github.houbb.minicat.dto.MiniCatRequest;
 import com.github.houbb.minicat.dto.MiniCatResponse;
 import com.github.houbb.minicat.exception.MiniCatException;
 import com.github.houbb.minicat.util.InnerHttpUtil;
+import com.github.houbb.minicat.util.ResourceUtil;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -73,16 +75,31 @@ public class MiniCatBootstrap {
             runningFlag = true;
 
             while(runningFlag && !serverSocket.isClosed()){
-                Socket socket = serverSocket.accept();
-                // 输入流
-                InputStream inputStream = socket.getInputStream();
-                MiniCatRequest request = new MiniCatRequest(inputStream);
+                //TRW
+                try (Socket socket = serverSocket.accept()) {
+                    // 输入流
+                    InputStream inputStream = socket.getInputStream();
+                    MiniCatRequest request = new MiniCatRequest(inputStream);
 
-                // 输出流
-                MiniCatResponse response = new MiniCatResponse(socket.getOutputStream());
-                response.write(InnerHttpUtil.httpResp("Hello miniCat!").getBytes());
-
-                socket.close();
+                    // 输出流
+                    MiniCatResponse response = new MiniCatResponse(socket.getOutputStream());
+                    // 判断文件是否存在
+                    String staticHtmlPath = request.getUrl();
+                    if (staticHtmlPath.endsWith(".html")) {
+                        String absolutePath = ResourceUtil.buildFullPath(ResourceUtil.getClassRootResource(MiniCatBootstrap.class), staticHtmlPath);
+                        String content = FileUtil.getFileContent(absolutePath);
+                        logger.info("[MiniCat] static html path: {}, content={}", absolutePath, content);
+                        String html = InnerHttpUtil.http200Resp(content);
+                        response.write(html);
+                    } else {
+                        String html = InnerHttpUtil.http404Resp();
+                        response.write(html);
+                    }
+                } catch (Exception e) {
+                    logger.error("[MiniCat] server meet ex", e);
+                    //TODO: 如何保持健壮性？
+                    return;
+                }
             }
 
             logger.info("[MiniCat] end listen on port {}", port);

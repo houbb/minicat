@@ -22,7 +22,7 @@
 <dependency>
     <groupId>com.github.houbb</groupId>
     <artifactId>minicat</artifactId>
-    <version>0.1.0</version>
+    <version>0.2.0</version>
 </dependency>
 ```
 
@@ -51,6 +51,7 @@ public class MiniCatBootstrapMain {
 
 # ROAD-MAP
 
+- [] servlet 标准支持
 - [] NIO 实现
 - [] 加载 war 包
 - [] 内嵌支持？
