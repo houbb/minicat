@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<web-app>
+
+    <servlet>
+        <servlet-name>my</servlet-name>
+        <servlet-class>com.github.houbb.minicat.support.servlet.MyMiniCatHttpServlet</servlet-class>
+    </servlet>
+
+    <servlet-mapping>
+        <servlet-name>my</servlet-name>
+        <url-pattern>/my</url-pattern>
+    </servlet-mapping>
+
+</web-app>

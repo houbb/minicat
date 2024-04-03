@@ -17,6 +17,18 @@ public class InnerHttpUtil {
     }
 
     /**
+     * 400 响应
+     * @return 结果
+     * @since 0.2.0
+     */
+    public static String http400Resp() {
+        return "HTTP/1.1 400 Bad Request\r\n" +
+                "Content-Type: text/plain\r\n" +
+                "\r\n" +
+                "400 Bad Request: The request could not be understood by the server due to malformed syntax.";
+    }
+
+    /**
      * 404 响应
      * @return 结果
      * @since 0.2.0

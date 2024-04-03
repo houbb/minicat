@@ -10,6 +10,10 @@
 
 - 简单的启动实现
 
+- servlet 支持
+
+- 静态网页支持
+
 # 变更日志
 
 > [变更日志](CHANGE_LOG.md)
@@ -22,36 +26,38 @@
 <dependency>
     <groupId>com.github.houbb</groupId>
     <artifactId>minicat</artifactId>
-    <version>0.2.0</version>
+    <version>0.3.0</version>
 </dependency>
 ```
 
 ## 启动测试
 
 ```java
-package com.github.houbb.minicat.bs;
+MiniCatBootstrap bootstrap = new MiniCatBootstrap();
+bootstrap.start();
+```
 
-import java.util.concurrent.TimeUnit;
+启动日志：
 
-public class MiniCatBootstrapMain {
+```
+[INFO] [2024-04-03 11:09:15.178] [main] [c.g.h.m.s.s.WebXmlServletManager.register] - [MiniCat] register servlet, url=/my, servlet=com.github.houbb.minicat.support.servlet.MyMiniCatHttpServlet
+[INFO] [2024-04-03 11:09:15.180] [Thread-0] [c.g.h.m.b.MiniCatBootstrap.startSync] - [MiniCat] start listen on port 8080
+[INFO] [2024-04-03 11:09:15.180] [Thread-0] [c.g.h.m.b.MiniCatBootstrap.startSync] - [MiniCat] visit url http://127.0.0.1:8080
+```
 
-    public static void main(String[] args) throws InterruptedException {
-        MiniCatBootstrap bootstrap = new MiniCatBootstrap();
-        bootstrap.start();
+页面访问：[http://127.0.0.1:8080](http://127.0.0.1:8080)
 
-        System.out.println("main START sleep");
-        TimeUnit.SECONDS.sleep(10);
-        System.out.println("main END sleep");
+响应：
 
-        bootstrap.stop();
-    }
-
-}
+```
+http://127.0.0.1:8080
 ```
 
 # ROAD-MAP
 
-- [] servlet 标准支持
-- [] NIO 实现
+- [x] servlet 标准支持
+- [] 请求线程池支持
+
 - [] 加载 war 包
 - [] 内嵌支持？
+- [] NIO 实现

@@ -1,13 +1,15 @@
 package com.github.houbb.minicat.bs;
 
-import com.github.houbb.heaven.util.io.FileUtil;
 import com.github.houbb.log.integration.core.Log;
 import com.github.houbb.log.integration.core.LogFactory;
 import com.github.houbb.minicat.dto.MiniCatRequest;
 import com.github.houbb.minicat.dto.MiniCatResponse;
 import com.github.houbb.minicat.exception.MiniCatException;
-import com.github.houbb.minicat.util.InnerHttpUtil;
-import com.github.houbb.minicat.util.ResourceUtil;
+import com.github.houbb.minicat.support.request.IRequestDispatcher;
+import com.github.houbb.minicat.support.request.RequestDispatcherContext;
+import com.github.houbb.minicat.support.request.RequestDispatcherManager;
+import com.github.houbb.minicat.support.servlet.IServletManager;
+import com.github.houbb.minicat.support.servlet.WebXmlServletManager;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -36,6 +38,36 @@ public class MiniCatBootstrap {
      * 服务端 socket
      */
     private ServerSocket serverSocket;
+
+    /**
+     * servlet 管理
+     *
+     * @since 0.3.0
+     */
+    private IServletManager servletManager = new WebXmlServletManager();
+
+    /**
+     * 请求分发
+     *
+     * @since 0.3.0
+     */
+    private IRequestDispatcher requestDispatcher = new RequestDispatcherManager();
+
+    public IRequestDispatcher getRequestDispatcher() {
+        return requestDispatcher;
+    }
+
+    public void setRequestDispatcher(IRequestDispatcher requestDispatcher) {
+        this.requestDispatcher = requestDispatcher;
+    }
+
+    public IServletManager getServletManager() {
+        return servletManager;
+    }
+
+    public void setServletManager(IServletManager servletManager) {
+        this.servletManager = servletManager;
+    }
 
     public MiniCatBootstrap(int port) {
         this.port = port;
@@ -77,33 +109,25 @@ public class MiniCatBootstrap {
             while(runningFlag && !serverSocket.isClosed()){
                 //TRW
                 try (Socket socket = serverSocket.accept()) {
-                    // 输入流
+                    // 出入参
                     InputStream inputStream = socket.getInputStream();
                     MiniCatRequest request = new MiniCatRequest(inputStream);
-
-                    // 输出流
                     MiniCatResponse response = new MiniCatResponse(socket.getOutputStream());
-                    // 判断文件是否存在
-                    String staticHtmlPath = request.getUrl();
-                    if (staticHtmlPath.endsWith(".html")) {
-                        String absolutePath = ResourceUtil.buildFullPath(ResourceUtil.getClassRootResource(MiniCatBootstrap.class), staticHtmlPath);
-                        String content = FileUtil.getFileContent(absolutePath);
-                        logger.info("[MiniCat] static html path: {}, content={}", absolutePath, content);
-                        String html = InnerHttpUtil.http200Resp(content);
-                        response.write(html);
-                    } else {
-                        String html = InnerHttpUtil.http404Resp();
-                        response.write(html);
-                    }
+
+                    // 分发处理
+                    final RequestDispatcherContext dispatcherContext = new RequestDispatcherContext();
+                    dispatcherContext.setRequest(request);
+                    dispatcherContext.setResponse(response);
+                    dispatcherContext.setServletManager(servletManager);
+                    requestDispatcher.dispatch(dispatcherContext);
                 } catch (Exception e) {
                     logger.error("[MiniCat] server meet ex", e);
                     //TODO: 如何保持健壮性？
-                    return;
                 }
             }
 
             logger.info("[MiniCat] end listen on port {}", port);
-        } catch (IOException e) {
+        } catch (Exception e) {
             logger.error("[MiniCat] start meet ex", e);
             throw new MiniCatException(e);
         }

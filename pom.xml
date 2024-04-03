@@ -6,7 +6,7 @@
 
     <groupId>com.github.houbb</groupId>
     <artifactId>minicat</artifactId>
-    <version>0.2.0</version>
+    <version>0.3.0</version>
 
     <properties>
         <!--============================== All Plugins START ==============================-->
@@ -33,6 +33,9 @@
 
         <!--============================== OTHER ==============================-->
         <junit.version>4.13</junit.version>
+        <javax.servlet.version>4.0.1</javax.servlet.version>
+        <dom4j.version>1.6.1</dom4j.version>
+        <jaxen.version>1.1.6</jaxen.version>
     </properties>
 
     <dependencyManagement>
@@ -59,6 +62,22 @@
                 <artifactId>junit</artifactId>
                 <version>${junit.version}</version>
             </dependency>
+            <dependency>
+                <groupId>javax.servlet</groupId>
+                <artifactId>javax.servlet-api</artifactId>
+                <version>${javax.servlet.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>dom4j</groupId>
+                <artifactId>dom4j</artifactId>
+                <version>${dom4j.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>jaxen</groupId>
+                <artifactId>jaxen</artifactId>
+                <version>${jaxen.version}</version>
+            </dependency>
         </dependencies>
     </dependencyManagement>
 
@@ -70,6 +89,20 @@
         <dependency>
             <groupId>com.github.houbb</groupId>
             <artifactId>log-integration</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>javax.servlet</groupId>
+            <artifactId>javax.servlet-api</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>dom4j</groupId>
+            <artifactId>dom4j</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>jaxen</groupId>
+            <artifactId>jaxen</artifactId>
         </dependency>
     </dependencies>
 

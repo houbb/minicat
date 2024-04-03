@@ -12,12 +12,6 @@ public class MiniCatBootstrapMain {
     public static void main(String[] args) throws InterruptedException {
         MiniCatBootstrap bootstrap = new MiniCatBootstrap();
         bootstrap.start();
-
-        System.out.println("main START sleep");
-        TimeUnit.SECONDS.sleep(10);
-        System.out.println("main END sleep");
-
-        bootstrap.stop();
     }
 
 }
