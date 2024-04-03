@@ -15,16 +15,14 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 /**
  * @since 0.1.0
  * @author 老马啸西风
  */
-public class MiniCatBootstrap {
+public class MiniCatBootstrapBio {
 
-    private static final Log logger = LogFactory.getLog(MiniCatBootstrap.class);
+    private static final Log logger = LogFactory.getLog(MiniCatBootstrapBio.class);
 
     /**
      * 启动端口号
@@ -71,18 +69,11 @@ public class MiniCatBootstrap {
         this.servletManager = servletManager;
     }
 
-    private final ExecutorService threadPool;
-
-    public MiniCatBootstrap(int port, int threadPoolSize) {
+    public MiniCatBootstrapBio(int port) {
         this.port = port;
-        this.threadPool = Executors.newFixedThreadPool(threadPoolSize);
     }
 
-    public MiniCatBootstrap(int port) {
-        this(port, 10);
-    }
-
-    public MiniCatBootstrap() {
+    public MiniCatBootstrapBio() {
         this(8080);
     }
 
@@ -117,42 +108,28 @@ public class MiniCatBootstrap {
 
             while(runningFlag && !serverSocket.isClosed()){
                 //TRW
-                Socket socket = serverSocket.accept();
-                // 提交到线程池处理
-                threadPool.execute(new RequestHandler(socket));
+                try (Socket socket = serverSocket.accept()) {
+                    // 出入参
+                    InputStream inputStream = socket.getInputStream();
+                    MiniCatRequest request = new MiniCatRequest(inputStream);
+                    MiniCatResponse response = new MiniCatResponse(socket.getOutputStream());
+
+                    // 分发处理
+                    final RequestDispatcherContext dispatcherContext = new RequestDispatcherContext();
+                    dispatcherContext.setRequest(request);
+                    dispatcherContext.setResponse(response);
+                    dispatcherContext.setServletManager(servletManager);
+                    requestDispatcher.dispatch(dispatcherContext);
+                } catch (Exception e) {
+                    logger.error("[MiniCat] server meet ex", e);
+                    //TODO: 如何保持健壮性？
+                }
             }
 
             logger.info("[MiniCat] end listen on port {}", port);
         } catch (Exception e) {
             logger.error("[MiniCat] start meet ex", e);
             throw new MiniCatException(e);
-        }
-    }
-
-    private class RequestHandler implements Runnable {
-        private final Socket socket;
-
-        public RequestHandler(Socket socket) {
-            this.socket = socket;
-        }
-
-        @Override
-        public void run() {
-            try {
-                InputStream inputStream = socket.getInputStream();
-                MiniCatRequest request = new MiniCatRequest(inputStream);
-                MiniCatResponse response = new MiniCatResponse(socket.getOutputStream());
-
-                final RequestDispatcherContext dispatcherContext = new RequestDispatcherContext();
-                dispatcherContext.setRequest(request);
-                dispatcherContext.setResponse(response);
-                dispatcherContext.setServletManager(servletManager);
-                requestDispatcher.dispatch(dispatcherContext);
-
-                socket.close();
-            } catch (IOException e) {
-                logger.error("[MiniCat] error handling request", e);
-            }
         }
     }
 
