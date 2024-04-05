@@ -11,7 +11,7 @@ import java.util.Locale;
 /**
  * @since 0.3.0
  */
-public class MiniCatResponseAdaptor implements HttpServletResponse {
+public class MiniCatResponseAdaptor implements IMiniCatResponse {
 
     @Override
     public void addCookie(Cookie cookie) {
@@ -198,4 +198,8 @@ public class MiniCatResponseAdaptor implements HttpServletResponse {
         return null;
     }
 
+    @Override
+    public void write(String text, String charset) {
+
+    }
 }

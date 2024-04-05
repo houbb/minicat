@@ -2,7 +2,8 @@ package com.github.houbb.minicat.support.servlet;
 
 import com.github.houbb.log.integration.core.Log;
 import com.github.houbb.log.integration.core.LogFactory;
-import com.github.houbb.minicat.dto.MiniCatResponse;
+import com.github.houbb.minicat.dto.IMiniCatResponse;
+import com.github.houbb.minicat.dto.MiniCatResponseBio;
 import com.github.houbb.minicat.util.InnerHttpUtil;
 
 import javax.servlet.http.HttpServletRequest;
@@ -24,12 +25,12 @@ public class MyMiniCatHttpServlet extends AbstractMiniCatHttpServlet {
         logger.info("MyMiniCatServlet-get");
         // 模拟耗时
         try {
-            Thread.sleep(10000);
+            Thread.sleep(5000);
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
         String content = "MyMiniCatServlet-get";
-        MiniCatResponse miniCatResponse = (MiniCatResponse) response;
+        IMiniCatResponse miniCatResponse = (IMiniCatResponse) response;
         miniCatResponse.write(InnerHttpUtil.http200Resp(content));
         logger.info("MyMiniCatServlet-get-end");
     }
@@ -38,7 +39,7 @@ public class MyMiniCatHttpServlet extends AbstractMiniCatHttpServlet {
     public void doPost(HttpServletRequest request, HttpServletResponse response) {
         String content = "MyMiniCatServlet-post";
 
-        MiniCatResponse miniCatResponse = (MiniCatResponse) response;
+        IMiniCatResponse miniCatResponse = (IMiniCatResponse) response;
         miniCatResponse.write(InnerHttpUtil.http200Resp(content));
     }
 

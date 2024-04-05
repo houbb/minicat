@@ -26,11 +26,13 @@
 <dependency>
     <groupId>com.github.houbb</groupId>
     <artifactId>minicat</artifactId>
-    <version>0.3.0</version>
+    <version>0.4.0</version>
 </dependency>
 ```
 
 ## 启动测试
+
+运行测试类 `MiniCatBootstrapMain#main`
 
 ```java
 MiniCatBootstrap bootstrap = new MiniCatBootstrap();
@@ -53,11 +55,17 @@ bootstrap.start();
 http://127.0.0.1:8080
 ```
 
+## 测试
+
+servlet: http://127.0.0.1:8080/my
+
+html: http://127.0.0.1:8080/index.html
+
 # ROAD-MAP
 
 - [x] servlet 标准支持
-- [] 请求线程池支持
-
+- [x] 请求线程池支持
+- [x] NIO 实现
+- [] netty 实现
 - [] 加载 war 包
 - [] 内嵌支持？
-- [] NIO 实现

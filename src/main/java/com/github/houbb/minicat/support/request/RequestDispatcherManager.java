@@ -3,8 +3,8 @@ package com.github.houbb.minicat.support.request;
 import com.github.houbb.heaven.util.lang.StringUtil;
 import com.github.houbb.log.integration.core.Log;
 import com.github.houbb.log.integration.core.LogFactory;
-import com.github.houbb.minicat.dto.MiniCatRequest;
-import com.github.houbb.minicat.dto.MiniCatResponse;
+import com.github.houbb.minicat.dto.IMiniCatRequest;
+import com.github.houbb.minicat.dto.IMiniCatResponse;
 import com.github.houbb.minicat.support.servlet.IServletManager;
 
 /**
@@ -22,8 +22,8 @@ public class RequestDispatcherManager implements IRequestDispatcher {
 
     @Override
     public void dispatch(RequestDispatcherContext context) {
-        final MiniCatRequest request = context.getRequest();
-        final MiniCatResponse response = context.getResponse();
+        final IMiniCatRequest request = context.getRequest();
+        final IMiniCatResponse response = context.getResponse();
         final IServletManager servletManager = context.getServletManager();
 
         // 判断文件是否存在

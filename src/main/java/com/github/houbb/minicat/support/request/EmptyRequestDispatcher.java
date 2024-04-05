@@ -3,8 +3,6 @@ package com.github.houbb.minicat.support.request;
 import com.github.houbb.log.integration.core.Log;
 import com.github.houbb.log.integration.core.LogFactory;
 import com.github.houbb.minicat.bs.MiniCatBootstrap;
-import com.github.houbb.minicat.dto.MiniCatRequest;
-import com.github.houbb.minicat.dto.MiniCatResponse;
 import com.github.houbb.minicat.util.InnerHttpUtil;
 
 /**

@@ -15,7 +15,7 @@ import java.util.Map;
  * 请求适配器
  * @since 0.3.0
  */
-public class MiniCatRequestAdaptor implements HttpServletRequest {
+public class MiniCatRequestAdaptor implements IMiniCatRequest {
     @Override
     public String getAuthType() {
         return null;
@@ -49,6 +49,11 @@ public class MiniCatRequestAdaptor implements HttpServletRequest {
     @Override
     public int getIntHeader(String name) {
         return 0;
+    }
+
+    @Override
+    public String getUrl() {
+        return null;
     }
 
     @Override

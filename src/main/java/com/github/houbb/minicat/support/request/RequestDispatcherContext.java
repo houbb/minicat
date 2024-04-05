@@ -1,30 +1,30 @@
 package com.github.houbb.minicat.support.request;
 
-import com.github.houbb.minicat.dto.MiniCatRequest;
-import com.github.houbb.minicat.dto.MiniCatResponse;
+import com.github.houbb.minicat.dto.IMiniCatRequest;
+import com.github.houbb.minicat.dto.IMiniCatResponse;
 import com.github.houbb.minicat.support.servlet.IServletManager;
 
 public class RequestDispatcherContext {
 
-    private MiniCatRequest request;
+    private IMiniCatRequest request;
 
-    private MiniCatResponse response;
+    private IMiniCatResponse response;
 
     private IServletManager servletManager;
 
-    public MiniCatRequest getRequest() {
+    public IMiniCatRequest getRequest() {
         return request;
     }
 
-    public void setRequest(MiniCatRequest request) {
+    public void setRequest(IMiniCatRequest request) {
         this.request = request;
     }
 
-    public MiniCatResponse getResponse() {
+    public IMiniCatResponse getResponse() {
         return response;
     }
 
-    public void setResponse(MiniCatResponse response) {
+    public void setResponse(IMiniCatResponse response) {
         this.response = response;
     }
 

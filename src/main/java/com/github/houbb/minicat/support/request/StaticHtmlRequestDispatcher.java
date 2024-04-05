@@ -4,8 +4,8 @@ import com.github.houbb.heaven.util.io.FileUtil;
 import com.github.houbb.log.integration.core.Log;
 import com.github.houbb.log.integration.core.LogFactory;
 import com.github.houbb.minicat.bs.MiniCatBootstrap;
-import com.github.houbb.minicat.dto.MiniCatRequest;
-import com.github.houbb.minicat.dto.MiniCatResponse;
+import com.github.houbb.minicat.dto.IMiniCatRequest;
+import com.github.houbb.minicat.dto.IMiniCatResponse;
 import com.github.houbb.minicat.util.InnerHttpUtil;
 import com.github.houbb.minicat.util.ResourceUtil;
 
@@ -22,8 +22,8 @@ public class StaticHtmlRequestDispatcher implements IRequestDispatcher {
      * @param context 上下文
      */
     public void dispatch(RequestDispatcherContext context) {
-        final MiniCatRequest request = context.getRequest();
-        final MiniCatResponse response = context.getResponse();
+        final IMiniCatRequest request = context.getRequest();
+        final IMiniCatResponse response = context.getResponse();
 
         String absolutePath = ResourceUtil.buildFullPath(ResourceUtil.getClassRootResource(MiniCatBootstrap.class), request.getUrl());
         String content = FileUtil.getFileContent(absolutePath);

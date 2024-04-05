@@ -2,8 +2,8 @@ package com.github.houbb.minicat.bs;
 
 import com.github.houbb.log.integration.core.Log;
 import com.github.houbb.log.integration.core.LogFactory;
-import com.github.houbb.minicat.dto.MiniCatRequest;
-import com.github.houbb.minicat.dto.MiniCatResponse;
+import com.github.houbb.minicat.dto.MiniCatRequestBio;
+import com.github.houbb.minicat.dto.MiniCatResponseBio;
 import com.github.houbb.minicat.exception.MiniCatException;
 import com.github.houbb.minicat.support.request.IRequestDispatcher;
 import com.github.houbb.minicat.support.request.RequestDispatcherContext;
@@ -15,6 +15,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 /**
  * @since 0.1.0
@@ -69,15 +71,22 @@ public class MiniCatBootstrapBio {
         this.servletManager = servletManager;
     }
 
-    public MiniCatBootstrapBio(int port) {
+    private final ExecutorService threadPool;
+
+    public MiniCatBootstrapBio(int port, int threadPoolSize) {
         this.port = port;
+        this.threadPool = Executors.newFixedThreadPool(threadPoolSize);
+    }
+
+    public MiniCatBootstrapBio(int port) {
+        this(port, 10);
     }
 
     public MiniCatBootstrapBio() {
         this(8080);
     }
 
-    public synchronized void start() {
+    public void start() {
         // 引入线程池
         Thread serverThread = new Thread(new Runnable() {
             @Override
@@ -108,28 +117,42 @@ public class MiniCatBootstrapBio {
 
             while(runningFlag && !serverSocket.isClosed()){
                 //TRW
-                try (Socket socket = serverSocket.accept()) {
-                    // 出入参
-                    InputStream inputStream = socket.getInputStream();
-                    MiniCatRequest request = new MiniCatRequest(inputStream);
-                    MiniCatResponse response = new MiniCatResponse(socket.getOutputStream());
-
-                    // 分发处理
-                    final RequestDispatcherContext dispatcherContext = new RequestDispatcherContext();
-                    dispatcherContext.setRequest(request);
-                    dispatcherContext.setResponse(response);
-                    dispatcherContext.setServletManager(servletManager);
-                    requestDispatcher.dispatch(dispatcherContext);
-                } catch (Exception e) {
-                    logger.error("[MiniCat] server meet ex", e);
-                    //TODO: 如何保持健壮性？
-                }
+                Socket socket = serverSocket.accept();
+                // 提交到线程池处理
+                threadPool.execute(new RequestHandler(socket));
             }
 
             logger.info("[MiniCat] end listen on port {}", port);
         } catch (Exception e) {
             logger.error("[MiniCat] start meet ex", e);
             throw new MiniCatException(e);
+        }
+    }
+
+    private class RequestHandler implements Runnable {
+        private final Socket socket;
+
+        public RequestHandler(Socket socket) {
+            this.socket = socket;
+        }
+
+        @Override
+        public void run() {
+            try {
+                InputStream inputStream = socket.getInputStream();
+                MiniCatRequestBio request = new MiniCatRequestBio(inputStream);
+                MiniCatResponseBio response = new MiniCatResponseBio(socket.getOutputStream());
+
+                final RequestDispatcherContext dispatcherContext = new RequestDispatcherContext();
+                dispatcherContext.setRequest(request);
+                dispatcherContext.setResponse(response);
+                dispatcherContext.setServletManager(servletManager);
+                requestDispatcher.dispatch(dispatcherContext);
+
+                socket.close();
+            } catch (IOException e) {
+                logger.error("[MiniCat] error handling request", e);
+            }
         }
     }
 

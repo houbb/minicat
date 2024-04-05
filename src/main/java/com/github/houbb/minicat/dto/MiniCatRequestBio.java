@@ -3,15 +3,17 @@ package com.github.houbb.minicat.dto;
 import com.github.houbb.log.integration.core.Log;
 import com.github.houbb.log.integration.core.LogFactory;
 
+import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 
 /**
  * @since 0.2.0
  */
-public class MiniCatRequest extends MiniCatRequestAdaptor {
+public class MiniCatRequestBio extends MiniCatRequestAdaptor {
 
-    private static final Log logger = LogFactory.getLog(MiniCatRequest.class);
+    private static final Log logger = LogFactory.getLog(MiniCatRequestBio.class);
 
     /**
      * 请求方式 例如：GET/POST
@@ -32,18 +34,55 @@ public class MiniCatRequest extends MiniCatRequestAdaptor {
 
     private final InputStream inputStream;
 
-    public MiniCatRequest(InputStream inputStream) {
+    public MiniCatRequestBio(InputStream inputStream) {
         this.inputStream = inputStream;
 
-        this.readFromStreamByBuffer();
+        this.readFromStream();
     }
 
+    private void readFromStream() {
+        logger.info("[MiniCat] start readFrom stream id={}", inputStream);
+        // 使用BufferedReader来读取输入流
+        // 这个如果使用 TRW，会导致 socket 也被关闭。
+
+        BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
+        try {
+            String line;
+            // 读取第一行，即HTTP请求行
+            if ((line = reader.readLine()) != null && !line.isEmpty()) {
+                // 获取第一行数据
+                String[] strings = line.split(" ");
+                this.method = strings[0];
+                this.url = strings[1];
+            } else {
+                logger.info("[MiniCat] No HTTP request line found, ignoring.");
+            }
+        } catch (IOException e) {
+            logger.error("[MiniCat] readFromStream meet ex", e);
+            throw new RuntimeException(e);
+        } finally {
+            logger.info("[MiniCat] end readFrom stream");
+        }
+    }
 
     /**
      * 直接根据 available 有时候读取不到数据
      * @since 0.3.0
      */
-    private void readFromStreamByBuffer() {
+    private void readFromStreamByBufferMock() {
+        this.method = "get";
+        this.url = "/my";
+    }
+
+    /**
+     * 直接根据 available 有时候读取不到数据
+     *
+     * 后来测试发现这个会阻塞。
+     *
+     * @since 0.3.0
+     */
+    @Deprecated
+    private void readFromStreamByBufferBlocking() {
         byte[] buffer = new byte[1024]; // 使用固定大小的缓冲区
         int bytesRead = 0;
 
@@ -103,7 +142,7 @@ public class MiniCatRequest extends MiniCatRequestAdaptor {
      * 通过上述措施，您可以提高您的服务器代码的健壮性，确保即使在网络条件不稳定的情况下也能正确处理 HTTP 请求。
      */
     @Deprecated
-    private void readFromStream() {
+    private void readFromStreamLossData() {
         try {
             //从输入流中获取请求信息
             int count = inputStream.available();

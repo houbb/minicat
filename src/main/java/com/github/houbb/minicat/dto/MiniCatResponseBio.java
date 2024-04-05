@@ -1,5 +1,7 @@
 package com.github.houbb.minicat.dto;
 
+import com.github.houbb.log.integration.core.Log;
+import com.github.houbb.log.integration.core.LogFactory;
 import com.github.houbb.minicat.exception.MiniCatException;
 
 import java.io.IOException;
@@ -9,11 +11,13 @@ import java.io.PrintWriter;
 /**
  * @since 0.2.0
  */
-public class MiniCatResponse extends MiniCatResponseAdaptor {
+public class MiniCatResponseBio extends MiniCatResponseAdaptor {
+
+    private static final Log logger = LogFactory.getLog(MiniCatResponseBio.class);
 
     private final OutputStream outputStream;
 
-    public MiniCatResponse(OutputStream outputStream) {
+    public MiniCatResponseBio(OutputStream outputStream) {
         this.outputStream = outputStream;
     }
 
@@ -27,7 +31,9 @@ public class MiniCatResponse extends MiniCatResponseAdaptor {
         try {
             outputStream.write(text.getBytes(charset));
         } catch (IOException e) {
-            throw new MiniCatException(e);
+            logger.error("[MiniCat] write failed text={}, charset={}", text, charset, e);
+//            throw new MiniCatException(e);
+
         }
     }
 

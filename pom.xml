@@ -6,7 +6,7 @@
 
     <groupId>com.github.houbb</groupId>
     <artifactId>minicat</artifactId>
-    <version>0.3.0</version>
+    <version>0.4.0</version>
 
     <properties>
         <!--============================== All Plugins START ==============================-->
@@ -78,6 +78,12 @@
                 <artifactId>jaxen</artifactId>
                 <version>${jaxen.version}</version>
             </dependency>
+
+            <dependency>
+                <groupId>io.netty</groupId>
+                <artifactId>netty-all</artifactId>
+                <version>4.1.65.Final</version> <!-- or the latest version -->
+            </dependency>
         </dependencies>
     </dependencyManagement>
 
@@ -103,6 +109,11 @@
         <dependency>
             <groupId>jaxen</groupId>
             <artifactId>jaxen</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>io.netty</groupId>
+            <artifactId>netty-all</artifactId>
         </dependency>
     </dependencies>
 
