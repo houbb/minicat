@@ -9,7 +9,7 @@ import com.github.houbb.minicat.support.request.IRequestDispatcher;
 import com.github.houbb.minicat.support.request.RequestDispatcherContext;
 import com.github.houbb.minicat.support.request.RequestDispatcherManager;
 import com.github.houbb.minicat.support.servlet.IServletManager;
-import com.github.houbb.minicat.support.servlet.WebXmlServletManager;
+import com.github.houbb.minicat.support.servlet.LocalServletManager;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -46,7 +46,7 @@ public class MiniCatBootstrapBio {
      *
      * @since 0.3.0
      */
-    private IServletManager servletManager = new WebXmlServletManager();
+    private IServletManager servletManager = new LocalServletManager();
 
     /**
      * 请求分发

@@ -1,6 +1,6 @@
 package com.github.houbb.minicat.util;
 
-public class ResourceUtil {
+public class InnerResourceUtil {
 
     // 获取当前线程的上下文类加载器的资源路径
     public static String getCurrentThreadContextClassLoaderResource() {
@@ -64,9 +64,9 @@ public class ResourceUtil {
         // 示例用法
         System.out.println("Current Thread Context ClassLoader Resource: " + getCurrentThreadContextClassLoaderResource());
         System.out.println("System ClassLoader Resource: " + getSystemClassLoaderResource());
-        System.out.println("Class Loader Resource: " + getClassLoaderResource(ResourceUtil.class));
-        System.out.println("Class Root Resource: " + getClassRootResource(ResourceUtil.class));
-        System.out.println("Class Resource: " + getClassResource(ResourceUtil.class));
+        System.out.println("Class Loader Resource: " + getClassLoaderResource(InnerResourceUtil.class));
+        System.out.println("Class Root Resource: " + getClassRootResource(InnerResourceUtil.class));
+        System.out.println("Class Resource: " + getClassResource(InnerResourceUtil.class));
         System.out.println("Current Working Directory: " + getCurrentWorkingDirectory());
         System.out.println("Class Path: " + getClassPath());
     }

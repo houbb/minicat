@@ -7,7 +7,7 @@ import com.github.houbb.minicat.bs.MiniCatBootstrap;
 import com.github.houbb.minicat.dto.IMiniCatRequest;
 import com.github.houbb.minicat.dto.IMiniCatResponse;
 import com.github.houbb.minicat.util.InnerHttpUtil;
-import com.github.houbb.minicat.util.ResourceUtil;
+import com.github.houbb.minicat.util.InnerResourceUtil;
 
 /**
  * 静态页面
@@ -25,7 +25,7 @@ public class StaticHtmlRequestDispatcher implements IRequestDispatcher {
         final IMiniCatRequest request = context.getRequest();
         final IMiniCatResponse response = context.getResponse();
 
-        String absolutePath = ResourceUtil.buildFullPath(ResourceUtil.getClassRootResource(MiniCatBootstrap.class), request.getUrl());
+        String absolutePath = InnerResourceUtil.buildFullPath(context.getBaseDir(), request.getUrl());
         String content = FileUtil.getFileContent(absolutePath);
         logger.info("[MiniCat] static html path: {}, content={}", absolutePath, content);
         String html = InnerHttpUtil.http200Resp(content);

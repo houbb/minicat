@@ -4,6 +4,14 @@ import com.github.houbb.log.integration.core.Log;
 import com.github.houbb.log.integration.core.LogFactory;
 import com.github.houbb.minicat.bs.servlet.MiniCatBootstrapNetty;
 import com.github.houbb.minicat.exception.MiniCatException;
+import com.github.houbb.minicat.support.request.IRequestDispatcher;
+import com.github.houbb.minicat.support.request.RequestDispatcherManager;
+import com.github.houbb.minicat.support.servlet.IServletManager;
+import com.github.houbb.minicat.support.servlet.LocalServletManager;
+import com.github.houbb.minicat.support.servlet.WarsServletManager;
+import com.github.houbb.minicat.support.war.IWarExtractor;
+import com.github.houbb.minicat.support.war.WarExtractorDefault;
+import com.github.houbb.minicat.util.InnerResourceUtil;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelInitializer;
@@ -26,11 +34,64 @@ public class MiniCatBootstrap {
      */
     private final int port;
 
-    public MiniCatBootstrap() {
+    /**
+     * 默认文件夹
+     * @since 0.5.0
+     */
+    private String baseDir = InnerResourceUtil.getClassRootResource(MiniCatBootstrap.class);
+
+    /**
+     * war 解压管理
+     *
+     * @since 0.5.0
+     */
+    private IWarExtractor warExtractor = new WarExtractorDefault();
+
+    /**
+     * servlet 管理
+     *
+     * @since 0.5.0
+     */
+    private IServletManager servletManager = new WarsServletManager();
+
+    /**
+     * 请求分发
+     * @since 0.5.0
+     */
+    private IRequestDispatcher requestDispatcher = new RequestDispatcherManager();
+
+    public MiniCatBootstrap(final int port, final String baseDir) {
         this.port = 8080;
+        this.baseDir = baseDir;
+    }
+
+    public MiniCatBootstrap(final int port) {
+        this.port = port;
+    }
+
+    public MiniCatBootstrap() {
+        this(8080);
+    }
+
+    public void setBaseDir(String baseDir) {
+        this.baseDir = baseDir;
+    }
+
+    public void setWarExtractor(IWarExtractor warExtractor) {
+        this.warExtractor = warExtractor;
+    }
+
+    public void setServletManager(IServletManager servletManager) {
+        this.servletManager = servletManager;
+    }
+
+    public void setRequestDispatcher(IRequestDispatcher requestDispatcher) {
+        this.requestDispatcher = requestDispatcher;
     }
 
     public void start() {
+        beforeStart();
+
         logger.info("[MiniCat] start listen on port {}", port);
         logger.info("[MiniCat] visit url http://{}:{}", "127.0.0.1", port);
 
@@ -45,7 +106,7 @@ public class MiniCatBootstrap {
                     .childHandler(new ChannelInitializer<SocketChannel>() {
                         @Override
                         protected void initChannel(SocketChannel ch) throws Exception {
-                            ch.pipeline().addLast(new MiniCatServerHandler());
+                            ch.pipeline().addLast(new MiniCatServerHandler(servletManager, requestDispatcher, baseDir));
                         }
                     })
                     .option(ChannelOption.SO_BACKLOG, 128)
@@ -67,17 +128,15 @@ public class MiniCatBootstrap {
     }
 
     protected void beforeStart() {
-        //1. 加载解析所有的 war 包
+        logger.info("[MiniCat] beforeStart baseDir={}", baseDir);
 
+        //1. 加载解析所有的 war 包
         //2. 解压 war 包
-
         //3. 解析对应的 servlet 映射关系
-    }
+        warExtractor.extract(baseDir);
 
-    protected void afterStart() {
-        //1. 加载解析所有的 war 包
-
-
+        // 初始化 servlet 映射关系
+        servletManager.init(baseDir);
     }
 
 }

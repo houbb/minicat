@@ -1,5 +1,6 @@
 package com.github.houbb.minicat.util;
 
+@Deprecated
 public class CostTimeUtil {
 
    public static long costTimeMock() {

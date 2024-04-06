@@ -9,10 +9,8 @@ import com.github.houbb.minicat.dto.MiniCatRequestCommon;
 import com.github.houbb.minicat.dto.MiniCatResponseCommon;
 import com.github.houbb.minicat.support.request.IRequestDispatcher;
 import com.github.houbb.minicat.support.request.RequestDispatcherContext;
-import com.github.houbb.minicat.support.request.RequestDispatcherManager;
 import com.github.houbb.minicat.support.servlet.IServletManager;
-import com.github.houbb.minicat.support.servlet.WebXmlServletManager;
-import com.github.houbb.minicat.util.InnerHttpUtil;
+import com.github.houbb.minicat.support.writer.MyPrintWriter;
 import com.github.houbb.minicat.util.InnerRequestUtil;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
@@ -20,8 +18,11 @@ import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 
+import java.io.File;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.io.PrintWriter;
 import java.nio.charset.Charset;
-import java.util.concurrent.TimeUnit;
 
 class MiniCatServerHandler extends ChannelInboundHandlerAdapter {
 
@@ -33,14 +34,25 @@ class MiniCatServerHandler extends ChannelInboundHandlerAdapter {
      *
      * @since 0.3.0
      */
-    private final IServletManager servletManager = new WebXmlServletManager();
+    private final IServletManager servletManager;
 
     /**
      * 请求分发
      *
      * @since 0.3.0
      */
-    private final IRequestDispatcher requestDispatcher = new RequestDispatcherManager();
+    private final IRequestDispatcher requestDispatcher;
+
+    /**
+     * 基础文件夹
+     */
+    private final String baseDir;
+
+    MiniCatServerHandler(IServletManager servletManager, IRequestDispatcher requestDispatcher, String baseDir) {
+        this.servletManager = servletManager;
+        this.requestDispatcher = requestDispatcher;
+        this.baseDir = baseDir;
+    }
 
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
@@ -55,6 +67,20 @@ class MiniCatServerHandler extends ChannelInboundHandlerAdapter {
         RequestInfoBo requestInfoBo = InnerRequestUtil.buildRequestInfoBo(requestString);
         IMiniCatRequest request = new MiniCatRequestCommon(requestInfoBo.getMethod(), requestInfoBo.getUrl());
         IMiniCatResponse response = new MiniCatResponseCommon() {
+            // 兼容一下 getPrint 的写法，其实实现的还是过于简陋了。
+            @Override
+            public PrintWriter getWriter() throws IOException {
+                // 创建临时文件，文件名前缀为"temp"，后缀为".txt"，存放在默认临时目录中
+                File tempFile = File.createTempFile("MiniCatTempFile", ".txt");
+                // 可选：设置临时文件在JVM退出时自动删除
+                tempFile.deleteOnExit();
+
+                MyPrintWriter myPrintWriter = new MyPrintWriter(tempFile.getAbsoluteFile());
+                myPrintWriter.setCtx(ctx);
+
+                return myPrintWriter;
+            }
+
             @Override
             public void write(String text, String charsetStr) {
                 Charset charset = Charset.forName(charsetStr);
@@ -70,6 +96,7 @@ class MiniCatServerHandler extends ChannelInboundHandlerAdapter {
         dispatcherContext.setRequest(request);
         dispatcherContext.setResponse(response);
         dispatcherContext.setServletManager(servletManager);
+        dispatcherContext.setBaseDir(baseDir);
         requestDispatcher.dispatch(dispatcherContext);
     }
 

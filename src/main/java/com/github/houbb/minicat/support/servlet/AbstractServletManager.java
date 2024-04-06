@@ -1,5 +1,7 @@
 package com.github.houbb.minicat.support.servlet;
 
+import com.github.houbb.heaven.support.handler.IHandler;
+import com.github.houbb.heaven.util.lang.StringUtil;
 import com.github.houbb.log.integration.core.Log;
 import com.github.houbb.log.integration.core.LogFactory;
 import com.github.houbb.minicat.exception.MiniCatException;
@@ -17,23 +19,63 @@ import java.util.Map;
  * servlet 管理
  *
  * 基于 web.xml 的读取解析
- * @since 0.3.0
+ * @since 0.5.0
  */
-public class WebXmlServletManager implements IServletManager {
+public abstract class AbstractServletManager implements IServletManager {
 
-    private static final Log logger = LogFactory.getLog(WebXmlServletManager.class);
+    private static final Log logger = LogFactory.getLog(AbstractServletManager.class);
 
-    private static final Map<String, HttpServlet> servletMap = new HashMap<>();
+    protected final Map<String, HttpServlet> servletMap = new HashMap<>();
 
-    public WebXmlServletManager() {
-        this.loadFromWebXml();
+    protected abstract void doInit(String baseDirStr);
+
+    @Override
+    public void init(String baseDir) {
+        if(StringUtil.isEmpty(baseDir)) {
+            throw new MiniCatException("baseDir is empty!");
+        }
+
+        doInit(baseDir);
+    }
+
+    @Override
+    public void register(String url, HttpServlet servlet) {
+        logger.info("[MiniCat] register servlet, url={}, servlet={}", url, servlet.getClass().getName());
+
+        servletMap.put(url, servlet);
+    }
+
+    @Override
+    public HttpServlet getServlet(String url) {
+        return servletMap.get(url);
+    }
+
+    protected void loadFromWebXml(InputStream resourceAsStream) {
+        this.loadFromWebXml("", resourceAsStream);
     }
 
     //1. 解析 web.xml
     //2. 读取对应的 servlet mapping
     //3. 保存对应的 url + servlet 示例到 servletMap
-    private void loadFromWebXml() {
-        InputStream resourceAsStream = this.getClass().getClassLoader().getResourceAsStream("web.xml");
+    protected void loadFromWebXml(String urlPrefix, InputStream resourceAsStream) {
+        this.loadFromWebXml(urlPrefix, resourceAsStream, new IHandler<String, Class>() {
+            @Override
+            public Class handle(String s) {
+                try {
+                    // 默认直接加载本地的 class
+                    return Class.forName(s);
+                } catch (ClassNotFoundException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+        });
+    }
+
+    //1. 解析 web.xml
+    //2. 读取对应的 servlet mapping
+    //3. 保存对应的 url + servlet 示例到 servletMap
+    protected void loadFromWebXml(String urlPrefix, InputStream resourceAsStream, IHandler<String, Class> servletClassHandler) {
+//        InputStream resourceAsStream = this.getClass().getClassLoader().getResourceAsStream("web.xml");
         SAXReader saxReader = new SAXReader();
         try {
             Document document = saxReader.read(resourceAsStream);
@@ -58,9 +100,10 @@ public class WebXmlServletManager implements IServletManager {
                 Element servletMapping = (Element) rootElement.selectSingleNode("/web-app/servlet-mapping[servlet-name='" + servletName + "']'");
 
                 String urlPattern = servletMapping.selectSingleNode("url-pattern").getStringValue();
-                HttpServlet httpServlet = (HttpServlet) Class.forName(servletClass).newInstance();
+                Class servletClazz = servletClassHandler.handle(servletClass);
+                HttpServlet httpServlet = (HttpServlet) servletClazz.newInstance();
 
-                this.register(urlPattern, httpServlet);
+                this.register(urlPrefix + urlPattern, httpServlet);
             }
 
         } catch (Exception e) {
@@ -68,17 +111,6 @@ public class WebXmlServletManager implements IServletManager {
 
             throw new MiniCatException(e);
         }
-    }
-
-    @Override
-    public void register(String url, HttpServlet servlet) {
-        logger.info("[MiniCat] register servlet, url={}, servlet={}", url, servlet.getClass().getName());
-        servletMap.put(url, servlet);
-    }
-
-    @Override
-    public HttpServlet getServlet(String url) {
-        return servletMap.get(url);
     }
 
 }

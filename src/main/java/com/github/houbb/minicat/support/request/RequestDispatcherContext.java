@@ -12,6 +12,12 @@ public class RequestDispatcherContext {
 
     private IServletManager servletManager;
 
+    /**
+     * 基本文件夹
+     * @since 0.5.0
+     */
+    private String baseDir;
+
     public IMiniCatRequest getRequest() {
         return request;
     }
@@ -34,5 +40,13 @@ public class RequestDispatcherContext {
 
     public void setServletManager(IServletManager servletManager) {
         this.servletManager = servletManager;
+    }
+
+    public String getBaseDir() {
+        return baseDir;
+    }
+
+    public void setBaseDir(String baseDir) {
+        this.baseDir = baseDir;
     }
 }

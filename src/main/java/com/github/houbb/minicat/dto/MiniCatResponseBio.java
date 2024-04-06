@@ -32,8 +32,7 @@ public class MiniCatResponseBio extends MiniCatResponseAdaptor {
             outputStream.write(text.getBytes(charset));
         } catch (IOException e) {
             logger.error("[MiniCat] write failed text={}, charset={}", text, charset, e);
-//            throw new MiniCatException(e);
-
+            throw new MiniCatException(e);
         }
     }
 
