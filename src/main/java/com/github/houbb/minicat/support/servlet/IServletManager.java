@@ -1,6 +1,5 @@
 package com.github.houbb.minicat.support.servlet;
 
-import javax.servlet.Servlet;
 import javax.servlet.http.HttpServlet;
 
 /**

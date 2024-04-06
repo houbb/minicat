@@ -66,4 +66,18 @@ public class MiniCatBootstrap {
         }
     }
 
+    protected void beforeStart() {
+        //1. 加载解析所有的 war 包
+
+        //2. 解压 war 包
+
+        //3. 解析对应的 servlet 映射关系
+    }
+
+    protected void afterStart() {
+        //1. 加载解析所有的 war 包
+
+
+    }
+
 }
