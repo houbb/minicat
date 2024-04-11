@@ -46,6 +46,7 @@ public class InnerClassLoaderUtil {
      *
      * @param classFilePath 绝对路径的.class文件路径
      * @return Class对象
+     * @throws MalformedURLException 异常
      */
     public static Class<?> loadClassFromFile(String classFilePath) throws MalformedURLException {
         if (classFilePath == null || classFilePath.isEmpty()) {
