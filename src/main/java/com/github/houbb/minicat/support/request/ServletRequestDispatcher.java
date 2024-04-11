@@ -6,7 +6,8 @@ import com.github.houbb.minicat.bs.MiniCatBootstrap;
 import com.github.houbb.minicat.dto.IMiniCatRequest;
 import com.github.houbb.minicat.dto.IMiniCatResponse;
 import com.github.houbb.minicat.exception.MiniCatException;
-import com.github.houbb.minicat.support.servlet.IServletManager;
+import com.github.houbb.minicat.support.context.MiniCatContextConfig;
+import com.github.houbb.minicat.support.servlet.manager.IServletManager;
 import com.github.houbb.minicat.util.InnerHttpUtil;
 
 import javax.servlet.http.HttpServlet;
@@ -18,15 +19,10 @@ public class ServletRequestDispatcher implements IRequestDispatcher {
 
     private static final Log logger = LogFactory.getLog(MiniCatBootstrap.class);
 
-    /**
-     * 请求分发
-     *
-     * @param context 上下文
-     */
-    public void dispatch(RequestDispatcherContext context) {
-        final IMiniCatRequest request = context.getRequest();
-        final IMiniCatResponse response = context.getResponse();
-        final IServletManager servletManager = context.getServletManager();
+    public void dispatch(final IMiniCatRequest request,
+                         final IMiniCatResponse response,
+                         final MiniCatContextConfig config) {
+        final IServletManager servletManager = config.getServletManager();
 
         // 直接和 servlet 映射
         final String requestUrl = request.getUrl();

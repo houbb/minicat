@@ -7,9 +7,9 @@ import com.github.houbb.minicat.dto.IMiniCatRequest;
 import com.github.houbb.minicat.dto.IMiniCatResponse;
 import com.github.houbb.minicat.dto.MiniCatRequestCommon;
 import com.github.houbb.minicat.dto.MiniCatResponseCommon;
+import com.github.houbb.minicat.support.context.MiniCatContextConfig;
 import com.github.houbb.minicat.support.request.IRequestDispatcher;
-import com.github.houbb.minicat.support.request.RequestDispatcherContext;
-import com.github.houbb.minicat.support.servlet.IServletManager;
+import com.github.houbb.minicat.support.servlet.manager.IServletManager;
 import com.github.houbb.minicat.support.writer.MyPrintWriter;
 import com.github.houbb.minicat.util.InnerRequestUtil;
 import io.netty.buffer.ByteBuf;
@@ -20,7 +20,6 @@ import io.netty.channel.ChannelInboundHandlerAdapter;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.nio.charset.Charset;
 
@@ -30,13 +29,6 @@ class MiniCatServerHandler extends ChannelInboundHandlerAdapter {
 
 
     /**
-     * servlet 管理
-     *
-     * @since 0.3.0
-     */
-    private final IServletManager servletManager;
-
-    /**
      * 请求分发
      *
      * @since 0.3.0
@@ -44,14 +36,15 @@ class MiniCatServerHandler extends ChannelInboundHandlerAdapter {
     private final IRequestDispatcher requestDispatcher;
 
     /**
-     * 基础文件夹
+     * 配置信息
+     *
+     * @since 0.6.0
      */
-    private final String baseDir;
+    private final MiniCatContextConfig miniCatContextConfig;
 
-    MiniCatServerHandler(IServletManager servletManager, IRequestDispatcher requestDispatcher, String baseDir) {
-        this.servletManager = servletManager;
-        this.requestDispatcher = requestDispatcher;
-        this.baseDir = baseDir;
+    MiniCatServerHandler(final MiniCatContextConfig miniCatContextConfig) {
+        this.requestDispatcher = miniCatContextConfig.getRequestDispatcher();
+        this.miniCatContextConfig = miniCatContextConfig;
     }
 
     @Override
@@ -92,12 +85,7 @@ class MiniCatServerHandler extends ChannelInboundHandlerAdapter {
         };
 
         // 分发调用
-        final RequestDispatcherContext dispatcherContext = new RequestDispatcherContext();
-        dispatcherContext.setRequest(request);
-        dispatcherContext.setResponse(response);
-        dispatcherContext.setServletManager(servletManager);
-        dispatcherContext.setBaseDir(baseDir);
-        requestDispatcher.dispatch(dispatcherContext);
+        requestDispatcher.dispatch(request, response, miniCatContextConfig);
     }
 
     @Override

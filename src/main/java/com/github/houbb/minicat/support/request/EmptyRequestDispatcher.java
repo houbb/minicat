@@ -3,6 +3,9 @@ package com.github.houbb.minicat.support.request;
 import com.github.houbb.log.integration.core.Log;
 import com.github.houbb.log.integration.core.LogFactory;
 import com.github.houbb.minicat.bs.MiniCatBootstrap;
+import com.github.houbb.minicat.dto.IMiniCatRequest;
+import com.github.houbb.minicat.dto.IMiniCatResponse;
+import com.github.houbb.minicat.support.context.MiniCatContextConfig;
 import com.github.houbb.minicat.util.InnerHttpUtil;
 
 /**
@@ -15,11 +18,14 @@ public class EmptyRequestDispatcher implements IRequestDispatcher{
     /**
      * 请求分发
      */
-    public void dispatch(RequestDispatcherContext context) {
+    @Override
+    public void dispatch(final IMiniCatRequest request,
+                         final IMiniCatResponse response,
+                         final MiniCatContextConfig config) {
         logger.warn("[MiniCat] empty request url");
 
         //也可以返回默认页面之类的
-        context.getResponse().write(InnerHttpUtil.http400Resp());
+        response.write(InnerHttpUtil.http400Resp());
     }
 
 }

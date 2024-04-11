@@ -1,4 +1,4 @@
-package com.github.houbb.minicat.support.servlet;
+package com.github.houbb.minicat.support.servlet.manager;
 
 import javax.servlet.http.HttpServlet;
 

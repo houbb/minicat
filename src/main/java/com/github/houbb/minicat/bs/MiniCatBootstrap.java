@@ -4,11 +4,15 @@ import com.github.houbb.log.integration.core.Log;
 import com.github.houbb.log.integration.core.LogFactory;
 import com.github.houbb.minicat.bs.servlet.MiniCatBootstrapNetty;
 import com.github.houbb.minicat.exception.MiniCatException;
+import com.github.houbb.minicat.support.context.IMiniCatContextInit;
+import com.github.houbb.minicat.support.context.LocalMiniCatContextInit;
+import com.github.houbb.minicat.support.context.MiniCatContextConfig;
+import com.github.houbb.minicat.support.filter.manager.DefaultFilterManager;
+import com.github.houbb.minicat.support.filter.manager.IFilterManager;
 import com.github.houbb.minicat.support.request.IRequestDispatcher;
 import com.github.houbb.minicat.support.request.RequestDispatcherManager;
-import com.github.houbb.minicat.support.servlet.IServletManager;
-import com.github.houbb.minicat.support.servlet.LocalServletManager;
-import com.github.houbb.minicat.support.servlet.WarsServletManager;
+import com.github.houbb.minicat.support.servlet.manager.DefaultServletManager;
+import com.github.houbb.minicat.support.servlet.manager.IServletManager;
 import com.github.houbb.minicat.support.war.IWarExtractor;
 import com.github.houbb.minicat.support.war.WarExtractorDefault;
 import com.github.houbb.minicat.util.InnerResourceUtil;
@@ -52,13 +56,23 @@ public class MiniCatBootstrap {
      *
      * @since 0.5.0
      */
-    private IServletManager servletManager = new WarsServletManager();
+    private IServletManager servletManager = new DefaultServletManager();
+
+    /**
+     * 过滤管理器
+     */
+    private IFilterManager filterManager = new DefaultFilterManager();
 
     /**
      * 请求分发
      * @since 0.5.0
      */
     private IRequestDispatcher requestDispatcher = new RequestDispatcherManager();
+
+    /**
+     * 上下文初始化
+     */
+    private IMiniCatContextInit miniCatContextInit = new LocalMiniCatContextInit();
 
     public MiniCatBootstrap(final int port, final String baseDir) {
         this.port = 8080;
@@ -71,6 +85,14 @@ public class MiniCatBootstrap {
 
     public MiniCatBootstrap() {
         this(8080);
+    }
+
+    public void setFilterManager(IFilterManager filterManager) {
+        this.filterManager = filterManager;
+    }
+
+    public void setMiniCatContextInit(IMiniCatContextInit miniCatContextInit) {
+        this.miniCatContextInit = miniCatContextInit;
     }
 
     public void setBaseDir(String baseDir) {
@@ -89,6 +111,17 @@ public class MiniCatBootstrap {
         this.requestDispatcher = requestDispatcher;
     }
 
+    protected MiniCatContextConfig buildMiniCatContextConfig() {
+        MiniCatContextConfig config = new MiniCatContextConfig();
+        config.setPort(port);
+        config.setServletManager(servletManager);
+        config.setFilterManager(filterManager);
+        config.setBaseDir(baseDir);
+        config.setWarExtractor(warExtractor);
+        config.setRequestDispatcher(requestDispatcher);
+        return config;
+    }
+
     public void start() {
         beforeStart();
 
@@ -100,13 +133,18 @@ public class MiniCatBootstrap {
         EventLoopGroup workerGroup = new NioEventLoopGroup();
 
         try {
+            final MiniCatContextConfig miniCatContextConfig = buildMiniCatContextConfig();
+            logger.info("[MiniCat] config={}", miniCatContextConfig);
+            // 初始化
+            this.miniCatContextInit.init(miniCatContextConfig);
+
             ServerBootstrap serverBootstrap = new ServerBootstrap();
             serverBootstrap.group(bossGroup, workerGroup)
                     .channel(NioServerSocketChannel.class)
                     .childHandler(new ChannelInitializer<SocketChannel>() {
                         @Override
                         protected void initChannel(SocketChannel ch) throws Exception {
-                            ch.pipeline().addLast(new MiniCatServerHandler(servletManager, requestDispatcher, baseDir));
+                            ch.pipeline().addLast(new MiniCatServerHandler(miniCatContextConfig));
                         }
                     })
                     .option(ChannelOption.SO_BACKLOG, 128)

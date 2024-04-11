@@ -26,7 +26,7 @@
 <dependency>
     <groupId>com.github.houbb</groupId>
     <artifactId>minicat</artifactId>
-    <version>0.5.0</version>
+    <version>0.6.0</version>
 </dependency>
 ```
 
@@ -68,8 +68,9 @@ html: http://127.0.0.1:8080/index.html
 - [x] NIO 实现
 - [x] netty 实现
 - [x] 加载 war 包
+- [] listener 的实现
+- [] error/welcome 页面？
 - [] printWriter 等兼容不够优雅
 - [] 内嵌支持？
 - [] session
-- [] web.xml 更多能力 listener/filter 等
 - [] 注解的解析支持
