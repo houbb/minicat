@@ -16,9 +16,8 @@ import javax.servlet.http.HttpServlet;
 import java.io.File;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.function.Consumer;
 
 /**
  *
@@ -87,8 +86,46 @@ public class WarsMiniCatContextInit implements IMiniCatContextInit {
 
             //2. filter
             initFilterMapping(prefix, root, warDir);
+
+            //3. listener
+            initListener(root, warDir);
         } catch (DocumentException e) {
             throw new RuntimeException(e);
+        }
+    }
+
+    /**
+     * 初始化监听器
+     * @since 0.7.0
+     */
+    protected void initListener(Element root,
+                                File warDir) {
+        try {
+            List<Element> filterElements = root.elements("listener");
+            List<String> servletClassList = new ArrayList<>();
+            for (Element servletElement : filterElements) {
+                String servletClass = servletElement.elementText("listener-class");
+                servletClassList.add(servletClass);
+            }
+
+            // 自定义 class loader
+            Path classesPath = buildClassesPath(baseWarDirStr, warDir);
+            Path libPath = buildLibPath(baseWarDirStr, warDir);
+
+            // 这个是以 web.xml 为主题。
+            try(WebAppClassLoader webAppClassLoader = new WebAppClassLoader(classesPath, libPath)) {
+                servletClassList.forEach(className -> {
+                    try {
+                        Class<?> servletClazz = webAppClassLoader.loadClass(className);
+                        EventListener eventListener = (EventListener) servletClazz.newInstance();
+                        miniCatContextConfig.getListenerManager().addEventListener(eventListener);
+                    } catch (ClassNotFoundException | InstantiationException | IllegalAccessException e) {
+                        throw new MiniCatException(e);
+                    }
+                });
+            };
+        } catch (Exception e) {
+            throw new MiniCatException(e);
         }
     }
 

@@ -1,21 +1,42 @@
 package com.github.houbb.minicat.dto;
 
+import com.github.houbb.minicat.support.attr.DefaultMiniCatAttrManager;
+import com.github.houbb.minicat.support.attr.IMiniCatAttrManager;
+
 import javax.servlet.*;
 import javax.servlet.http.*;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.security.Principal;
-import java.util.Collection;
-import java.util.Enumeration;
-import java.util.Locale;
-import java.util.Map;
+import java.util.*;
 
 /**
  * 请求适配器
  * @since 0.3.0
  */
 public class MiniCatRequestAdaptor implements IMiniCatRequest {
+
+    private IMiniCatAttrManager attrManager = new DefaultMiniCatAttrManager();
+
+    private List<ServletRequestAttributeListener> servletRequestAttributeListeners = new ArrayList<>();
+
+    public IMiniCatAttrManager getAttrManager() {
+        return attrManager;
+    }
+
+    public void setAttrManager(IMiniCatAttrManager attrManager) {
+        this.attrManager = attrManager;
+    }
+
+    public List<ServletRequestAttributeListener> getServletRequestAttributeListeners() {
+        return servletRequestAttributeListeners;
+    }
+
+    public void setServletRequestAttributeListeners(List<ServletRequestAttributeListener> servletRequestAttributeListeners) {
+        this.servletRequestAttributeListeners = servletRequestAttributeListeners;
+    }
+
     @Override
     public String getAuthType() {
         return null;
@@ -183,12 +204,12 @@ public class MiniCatRequestAdaptor implements IMiniCatRequest {
 
     @Override
     public Object getAttribute(String name) {
-        return null;
+        return attrManager.getAttribute(name);
     }
 
     @Override
     public Enumeration<String> getAttributeNames() {
-        return null;
+        return attrManager.getAttributeNames();
     }
 
     @Override
@@ -278,12 +299,12 @@ public class MiniCatRequestAdaptor implements IMiniCatRequest {
 
     @Override
     public void setAttribute(String name, Object o) {
-
+        attrManager.setAttribute(name, o);
     }
 
     @Override
     public void removeAttribute(String name) {
-
+        attrManager.removeAttribute(name);
     }
 
     @Override
@@ -365,4 +386,6 @@ public class MiniCatRequestAdaptor implements IMiniCatRequest {
     public DispatcherType getDispatcherType() {
         return null;
     }
+
+
 }

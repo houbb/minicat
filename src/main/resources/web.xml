@@ -22,8 +22,22 @@
     </filter-mapping>
 
     <!-- Listener 配置 -->
-<!--    <listener>-->
-<!--        <listener-class>com.example.MyServletContextListener</listener-class>-->
-<!--    </listener>-->
-
+    <listener>
+        <listener-class>com.github.houbb.minicat.support.listener.foo.MyServletContextAttrListener</listener-class>
+    </listener>
+    <listener>
+        <listener-class>com.github.houbb.minicat.support.listener.foo.MyServletContextListener</listener-class>
+    </listener>
+    <listener>
+        <listener-class>com.github.houbb.minicat.support.listener.foo.MyServletReadListener</listener-class>
+    </listener>
+    <listener>
+        <listener-class>com.github.houbb.minicat.support.listener.foo.MyServletWriteListener</listener-class>
+    </listener>
+    <listener>
+        <listener-class>com.github.houbb.minicat.support.listener.foo.MyServletRequestListener</listener-class>
+    </listener>
+    <listener>
+        <listener-class>com.github.houbb.minicat.support.listener.foo.MyServletRequestAttrListener</listener-class>
+    </listener>
 </web-app>

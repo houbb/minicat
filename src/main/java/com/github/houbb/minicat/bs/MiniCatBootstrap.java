@@ -4,11 +4,15 @@ import com.github.houbb.log.integration.core.Log;
 import com.github.houbb.log.integration.core.LogFactory;
 import com.github.houbb.minicat.bs.servlet.MiniCatBootstrapNetty;
 import com.github.houbb.minicat.exception.MiniCatException;
+import com.github.houbb.minicat.support.attr.DefaultMiniCatAttrManager;
+import com.github.houbb.minicat.support.attr.IMiniCatAttrManager;
 import com.github.houbb.minicat.support.context.IMiniCatContextInit;
 import com.github.houbb.minicat.support.context.LocalMiniCatContextInit;
 import com.github.houbb.minicat.support.context.MiniCatContextConfig;
 import com.github.houbb.minicat.support.filter.manager.DefaultFilterManager;
 import com.github.houbb.minicat.support.filter.manager.IFilterManager;
+import com.github.houbb.minicat.support.listener.DefaultListenerManager;
+import com.github.houbb.minicat.support.listener.IListenerManager;
 import com.github.houbb.minicat.support.request.IRequestDispatcher;
 import com.github.houbb.minicat.support.request.RequestDispatcherManager;
 import com.github.houbb.minicat.support.servlet.manager.DefaultServletManager;
@@ -24,6 +28,9 @@ import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
+
+import javax.servlet.ServletContextListener;
+import java.util.function.Consumer;
 
 /**
  * @since 0.1.0
@@ -74,6 +81,17 @@ public class MiniCatBootstrap {
      */
     private IMiniCatContextInit miniCatContextInit = new LocalMiniCatContextInit();
 
+    /**
+     * 监听器管理类
+     * @since 0.7.0
+     */
+    private IListenerManager listenerManager = new DefaultListenerManager();
+
+    /**
+     * 属性管理
+     */
+    private IMiniCatAttrManager miniCatAttrManager = new DefaultMiniCatAttrManager();
+
     public MiniCatBootstrap(final int port, final String baseDir) {
         this.port = 8080;
         this.baseDir = baseDir;
@@ -111,6 +129,14 @@ public class MiniCatBootstrap {
         this.requestDispatcher = requestDispatcher;
     }
 
+    public void setListenerManager(IListenerManager listenerManager) {
+        this.listenerManager = listenerManager;
+    }
+
+    public void setMiniCatAttrManager(IMiniCatAttrManager miniCatAttrManager) {
+        this.miniCatAttrManager = miniCatAttrManager;
+    }
+
     protected MiniCatContextConfig buildMiniCatContextConfig() {
         MiniCatContextConfig config = new MiniCatContextConfig();
         config.setPort(port);
@@ -119,24 +145,29 @@ public class MiniCatBootstrap {
         config.setBaseDir(baseDir);
         config.setWarExtractor(warExtractor);
         config.setRequestDispatcher(requestDispatcher);
+        config.setListenerManager(listenerManager);
+        config.setMiniCatAttrManager(miniCatAttrManager);
         return config;
     }
 
     public void start() {
-        beforeStart();
-
         logger.info("[MiniCat] start listen on port {}", port);
         logger.info("[MiniCat] visit url http://{}:{}", "127.0.0.1", port);
 
         EventLoopGroup bossGroup = new NioEventLoopGroup();
         //worker 线程池的数量默认为 CPU 核心数的两倍
         EventLoopGroup workerGroup = new NioEventLoopGroup();
-
+        final MiniCatContextConfig miniCatContextConfig = buildMiniCatContextConfig();
         try {
-            final MiniCatContextConfig miniCatContextConfig = buildMiniCatContextConfig();
             logger.info("[MiniCat] config={}", miniCatContextConfig);
             // 初始化
             this.miniCatContextInit.init(miniCatContextConfig);
+
+            // init listener 监听器
+            if(miniCatContextConfig != null) {
+                listenerManager.getServletContextListeners()
+                        .forEach(servletContextListener -> servletContextListener.contextInitialized(miniCatContextConfig));
+            }
 
             ServerBootstrap serverBootstrap = new ServerBootstrap();
             serverBootstrap.group(bossGroup, workerGroup)
@@ -162,19 +193,15 @@ public class MiniCatBootstrap {
         } finally {
             workerGroup.shutdownGracefully();
             bossGroup.shutdownGracefully();
+
+            // 关闭
+            if(miniCatContextConfig != null) {
+                listenerManager.getServletContextListeners()
+                        .forEach(servletContextListener -> servletContextListener.contextDestroyed(miniCatContextConfig));
+            }
         }
     }
 
-    protected void beforeStart() {
-        logger.info("[MiniCat] beforeStart baseDir={}", baseDir);
 
-        //1. 加载解析所有的 war 包
-        //2. 解压 war 包
-        //3. 解析对应的 servlet 映射关系
-        warExtractor.extract(baseDir);
-
-        // 初始化 servlet 映射关系
-        servletManager.init(baseDir);
-    }
 
 }

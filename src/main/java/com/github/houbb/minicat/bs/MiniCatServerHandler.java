@@ -8,8 +8,8 @@ import com.github.houbb.minicat.dto.IMiniCatResponse;
 import com.github.houbb.minicat.dto.MiniCatRequestCommon;
 import com.github.houbb.minicat.dto.MiniCatResponseCommon;
 import com.github.houbb.minicat.support.context.MiniCatContextConfig;
+import com.github.houbb.minicat.support.listener.IListenerManager;
 import com.github.houbb.minicat.support.request.IRequestDispatcher;
-import com.github.houbb.minicat.support.servlet.manager.IServletManager;
 import com.github.houbb.minicat.support.writer.MyPrintWriter;
 import com.github.houbb.minicat.util.InnerRequestUtil;
 import io.netty.buffer.ByteBuf;
@@ -18,10 +18,15 @@ import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 
+import javax.servlet.ReadListener;
+import javax.servlet.ServletRequestEvent;
+import javax.servlet.ServletRequestListener;
+import javax.servlet.WriteListener;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.nio.charset.Charset;
+import java.util.List;
 
 class MiniCatServerHandler extends ChannelInboundHandlerAdapter {
 
@@ -42,23 +47,57 @@ class MiniCatServerHandler extends ChannelInboundHandlerAdapter {
      */
     private final MiniCatContextConfig miniCatContextConfig;
 
+    /**
+     * 监听器管理类
+     *
+     * @since 0.7.0
+     */
+    private final IListenerManager listenerManager;
+
     MiniCatServerHandler(final MiniCatContextConfig miniCatContextConfig) {
         this.requestDispatcher = miniCatContextConfig.getRequestDispatcher();
         this.miniCatContextConfig = miniCatContextConfig;
+        this.listenerManager = miniCatContextConfig.getListenerManager();
     }
 
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
-        ByteBuf buf = (ByteBuf) msg;
-        byte[] bytes = new byte[buf.readableBytes()];
-        buf.readBytes(bytes);
-        String requestString = new String(bytes, Charset.defaultCharset());
-        logger.info("[MiniCat] channelRead requestString={}", requestString);
+        final List<ReadListener> readListeners = listenerManager.getReadListeners();
+
+        String requestString = null;
+        try {
+            ByteBuf buf = (ByteBuf) msg;
+            byte[] bytes = new byte[buf.readableBytes()];
+            buf.readBytes(bytes);
+            requestString = new String(bytes, Charset.defaultCharset());
+            logger.info("[MiniCat] channelRead requestString={}", requestString);
+
+            // 读取
+            readListeners.forEach(readListener -> {
+                try {
+                    readListener.onDataAvailable();
+                    readListener.onAllDataRead();
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+            });
+        } catch (Exception e) {
+            // 读取
+            readListeners.forEach(readListener -> {
+                readListener.onError(e);
+            });
+            logger.info("[MiniCat] channelRead meet ex", e);
+        }
 
 
         // 获取请求信息
         RequestInfoBo requestInfoBo = InnerRequestUtil.buildRequestInfoBo(requestString);
         IMiniCatRequest request = new MiniCatRequestCommon(requestInfoBo.getMethod(), requestInfoBo.getUrl());
+        // 初始化 request
+        final ServletRequestEvent servletRequestEvent = new ServletRequestEvent(miniCatContextConfig.getServletContext(), request);
+        final List<ServletRequestListener> servletRequestListenerList = listenerManager.getServletRequestListeners();
+        servletRequestListenerList.forEach(servletRequestListener -> servletRequestListener.requestInitialized(servletRequestEvent));
+
         IMiniCatResponse response = new MiniCatResponseCommon() {
             // 兼容一下 getPrint 的写法，其实实现的还是过于简陋了。
             @Override
@@ -76,16 +115,37 @@ class MiniCatServerHandler extends ChannelInboundHandlerAdapter {
 
             @Override
             public void write(String text, String charsetStr) {
-                Charset charset = Charset.forName(charsetStr);
-                ByteBuf responseBuf = Unpooled.copiedBuffer(text, charset);
-                ctx.writeAndFlush(responseBuf)
-                        .addListener(ChannelFutureListener.CLOSE); // Close the channel after sending the response
-                logger.info("[MiniCat] channelRead writeAndFlush DONE");
+                final List<WriteListener> writeListeners = listenerManager.getWriteListeners();
+                try {
+                    Charset charset = Charset.forName(charsetStr);
+                    ByteBuf responseBuf = Unpooled.copiedBuffer(text, charset);
+                    ctx.writeAndFlush(responseBuf)
+                            .addListener(ChannelFutureListener.CLOSE); // Close the channel after sending the response
+                    logger.info("[MiniCat] channelRead writeAndFlush DONE");
+
+                    // 写入
+                    writeListeners.forEach(writeListener -> {
+                        try {
+                            writeListener.onWritePossible();
+                        } catch (IOException e) {
+                            throw new RuntimeException(e);
+                        }
+                    });
+                } catch (Exception e) {
+                    logger.error("[MiniCat] channel write failed", e);
+                    // 写入
+                    writeListeners.forEach(writeListener -> {
+                        writeListener.onError(e);
+                    });
+                }
             }
         };
 
         // 分发调用
         requestDispatcher.dispatch(request, response, miniCatContextConfig);
+
+        // 结束
+        servletRequestListenerList.forEach(servletRequestListener -> servletRequestListener.requestDestroyed(servletRequestEvent));
     }
 
     @Override

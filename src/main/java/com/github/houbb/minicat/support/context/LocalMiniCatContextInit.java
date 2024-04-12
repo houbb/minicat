@@ -1,9 +1,14 @@
 package com.github.houbb.minicat.support.context;
 
 import com.github.houbb.heaven.util.lang.StringUtil;
+import com.github.houbb.log.integration.core.Log;
+import com.github.houbb.log.integration.core.LogFactory;
+import com.github.houbb.minicat.bs.servlet.MiniCatBootstrapNetty;
 import com.github.houbb.minicat.exception.MiniCatException;
+import com.github.houbb.minicat.support.classloader.WebAppClassLoader;
 import com.github.houbb.minicat.support.filter.manager.IFilterManager;
 import com.github.houbb.minicat.support.servlet.manager.IServletManager;
+import com.github.houbb.minicat.support.war.IWarExtractor;
 import com.github.houbb.minicat.util.InnerResourceUtil;
 import org.dom4j.Document;
 import org.dom4j.Element;
@@ -12,11 +17,12 @@ import org.dom4j.io.SAXReader;
 import javax.servlet.Filter;
 import javax.servlet.http.HttpServlet;
 import java.io.File;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.nio.file.Path;
+import java.util.*;
 
 public class LocalMiniCatContextInit implements IMiniCatContextInit {
+
+    private static final Log logger = LogFactory.getLog(LocalMiniCatContextInit.class);
 
     private final File webXmlFile;
 
@@ -38,6 +44,20 @@ public class LocalMiniCatContextInit implements IMiniCatContextInit {
                 "web.xml")));
     }
 
+    protected void beforeProcessWebXml() {
+        final String baseDir = miniCatContextConfig.getBaseDir();
+        final IWarExtractor warExtractor = miniCatContextConfig.getWarExtractor();
+
+        logger.info("[MiniCat] beforeProcessWebXml start baseDir={}", miniCatContextConfig.getBaseDir());
+
+        //1. 加载解析所有的 war 包
+        //2. 解压 war 包
+        //3. 解析对应的 servlet 映射关系
+        warExtractor.extract(baseDir);
+
+        logger.info("[MiniCat] beforeProcessWebXml end");
+    }
+
     /**
      * 初始化
      *
@@ -45,6 +65,8 @@ public class LocalMiniCatContextInit implements IMiniCatContextInit {
      */
     public void init(final MiniCatContextConfig config) {
         this.miniCatContextConfig = config;
+
+        beforeProcessWebXml();
 
         // 解析 war 处理
         processWebXml();
@@ -67,6 +89,37 @@ public class LocalMiniCatContextInit implements IMiniCatContextInit {
             //2. 处理 filter
             final IFilterManager filterManager = this.miniCatContextConfig.getFilterManager();
             processWebFilter(root, filterManager);
+
+            //3. 处理 listener
+            initListener(root);
+        } catch (Exception e) {
+            throw new MiniCatException(e);
+        }
+    }
+
+    /**
+     * 初始化监听器
+     * @since 0.7.0
+     */
+    protected void initListener(Element root) {
+        try {
+            List<Element> filterElements = root.elements("listener");
+            List<String> servletClassList = new ArrayList<>();
+            for (Element servletElement : filterElements) {
+                String servletClass = servletElement.elementText("listener-class");
+                servletClassList.add(servletClass);
+            }
+
+            // 这个是以 web.xml 为主题。
+            servletClassList.forEach(className -> {
+                try {
+                    Class<?> servletClazz = Class.forName(className);
+                    EventListener eventListener = (EventListener) servletClazz.newInstance();
+                    miniCatContextConfig.getListenerManager().addEventListener(eventListener);
+                } catch (ClassNotFoundException | InstantiationException | IllegalAccessException e) {
+                    throw new MiniCatException(e);
+                }
+            });
         } catch (Exception e) {
             throw new MiniCatException(e);
         }

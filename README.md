@@ -8,11 +8,15 @@
 
 # 特性
 
-- 简单的启动实现
+- 简单的启动实现/netty 支持
 
 - servlet 支持
 
 - 静态网页支持
+
+- filter/listener 支持
+
+- wars 支持
 
 # 变更日志
 
@@ -26,7 +30,7 @@
 <dependency>
     <groupId>com.github.houbb</groupId>
     <artifactId>minicat</artifactId>
-    <version>0.6.0</version>
+    <version>0.7.0</version>
 </dependency>
 ```
 
@@ -68,7 +72,7 @@ html: http://127.0.0.1:8080/index.html
 - [x] NIO 实现
 - [x] netty 实现
 - [x] 加载 war 包
-- [] listener 的实现
+- [x] listener 的实现
 - [] error/welcome 页面？
 - [] printWriter 等兼容不够优雅
 - [] 内嵌支持？
