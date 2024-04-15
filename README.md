@@ -6,7 +6,7 @@
  > ^ <
 ```
 
-mini-cat 是简易版本的 tomcat 实现。
+mini-cat 是简易版本的 tomcat 实现。别称【嗅虎】(心有猛虎，轻嗅蔷薇。)
 
 [![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.github.houbb/minicat/badge.svg)](http://mvnrepository.com/artifact/com.github.houbb/minicat)
 [![Build Status](https://www.travis-ci.org/houbb/minicat.svg?branch=master)](https://www.travis-ci.org/houbb/minicat?branch=master)
