@@ -17,7 +17,7 @@ import javax.servlet.http.HttpServlet;
  */
 public class ServletRequestDispatcher implements IRequestDispatcher {
 
-    private static final Log logger = LogFactory.getLog(MiniCatBootstrap.class);
+    private static final Log logger = LogFactory.getLog(ServletRequestDispatcher.class);
 
     public void dispatch(final IMiniCatRequest request,
                          final IMiniCatResponse response,

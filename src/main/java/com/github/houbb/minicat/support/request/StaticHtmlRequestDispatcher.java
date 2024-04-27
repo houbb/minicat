@@ -12,10 +12,11 @@ import com.github.houbb.minicat.util.InnerResourceUtil;
 
 /**
  * 静态页面
+ * @author 老马啸西风
  */
 public class StaticHtmlRequestDispatcher implements IRequestDispatcher {
 
-    private static final Log logger = LogFactory.getLog(MiniCatBootstrap.class);
+    private static final Log logger = LogFactory.getLog(StaticHtmlRequestDispatcher.class);
 
     public void dispatch(final IMiniCatRequest request,
                          final IMiniCatResponse response,

@@ -13,6 +13,7 @@ import javax.servlet.http.HttpServletResponse;
  * 仅用于测试
  *
  * @since 0.3.0
+ * @author 老马啸西风
  */
 public class MyMiniCatHttpServlet extends AbstractMiniCatHttpServlet {
 
